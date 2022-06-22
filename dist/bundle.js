@@ -4,22 +4,23 @@ const canvas = document.querySelector('#can');
 const ctx = canvas.getContext("2d");
 const player = {
     wave: 1,
-    healthPoints: 100
+    healthPoints: 100,
+    money: 0
 };
 let path = [
-    { x: 100, y: 50 },
-    { x: 300, y: 90 },
-    { x: 500, y: 200 },
-    { x: 600, y: 500 },
-    { x: 800, y: 300 },
-    { x: 900, y: 300 }
+    { x: 100, y: 100 },
+    { x: 300, y: 140 },
+    { x: 500, y: 250 },
+    { x: 600, y: 550 },
+    { x: 800, y: 350 },
+    { x: 900, y: 350 }
 ];
 let turrets = [];
 let enemies = [];
-turrets.push(create_turret({ x: 100, y: 110 }, 'purple', 70, 10));
-turrets.push(create_turret({ x: 500, y: 130 }, 'purple', 70, 10));
-turrets.push(create_turret({ x: 610, y: 420 }, 'purple', 70, 10));
-create_enemies_over_time(create_enemy(10, 5, path, "red", 20), enemies, 5, 400);
+turrets.push(create_turret({ x: 100, y: 160 }, 'purple', 70, 10));
+turrets.push(create_turret({ x: 500, y: 180 }, 'purple', 70, 10));
+turrets.push(create_turret({ x: 610, y: 470 }, 'purple', 70, 10));
+create_enemies_over_time(create_enemy(10, 5, path, "red", 2), enemies, 5, 400);
 let main_loop = setInterval(() => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_path(path, ctx);
@@ -47,14 +48,18 @@ let main_loop = setInterval(() => {
             move_to_target(enemy);
             draw_enemy(enemy, ctx);
             if (enemy.healthPoints < 0) {
+                player.money += enemy.damage;
                 enemies.splice(enemies.indexOf(enemy), 1);
             }
             if (vector_distance(enemy.position, enemy.path[enemy.path.length - 1]) <= 10) {
-                enemies.splice(enemies.indexOf(enemy), 1);
                 player.healthPoints -= enemy.damage;
+                enemies.splice(enemies.indexOf(enemy), 1);
             }
         }
     });
+    ctx.fillStyle = 'black';
+    ctx.font = '50px serif';
+    ctx.fillText(`health: ${player.healthPoints}        money: ${player.money}       wave: ${player.wave}`, 0, 50);
 }, timeScale);
 function create_enemies_over_time(enemyTemplate, enemyArray, count, timeout) {
     let i = 0;
@@ -106,9 +111,6 @@ function move_to_target(e) {
         return;
     }
     move_in_direction(e, vector_scale(navigate(e), -1));
-}
-function deal_damage(e, dmg) {
-    e.healthPoints -= dmg;
 }
 function draw_path(p, c) {
     c.beginPath();
@@ -179,6 +181,9 @@ function draw_laser(t, e, c) {
     c.lineTo(e.position.x, e.position.y);
     c.stroke();
     c.closePath();
+}
+function deal_damage(e, dmg) {
+    e.healthPoints -= dmg;
 }
 function vector_sum(v1, v2) {
     return {

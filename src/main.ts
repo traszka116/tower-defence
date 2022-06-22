@@ -5,8 +5,9 @@ const ctx = canvas.getContext("2d") as CanvasRenderingContext2D
 
 const player = {
     wave: 1,
-    healthPoints: 100
-}
+    healthPoints: 100,
+    money:0
+}   
 
 
 
@@ -14,12 +15,12 @@ const player = {
 
 let path: Path =
     [
-        { x: 100, y: 50 },
-        { x: 300, y: 90 },
-        { x: 500, y: 200 },
-        { x: 600, y: 500 },
-        { x: 800, y: 300 },
-        { x: 900, y: 300 }
+        { x: 100, y: 100 },
+        { x: 300, y: 140 },
+        { x: 500, y: 250 },
+        { x: 600, y: 550 },
+        { x: 800, y: 350 },
+        { x: 900, y: 350 }
     ]
 
 
@@ -28,11 +29,11 @@ let turrets: Turret[] = []
 let enemies: (Enemy | undefined)[] = []
 
 
-turrets.push(create_turret({ x: 100, y: 110 }, 'purple', 70, 10))
-turrets.push(create_turret({ x: 500, y: 130 }, 'purple', 70, 10))
-turrets.push(create_turret({ x: 610, y: 420 }, 'purple', 70, 10))
+turrets.push(create_turret({ x: 100, y: 160 }, 'purple', 70, 10))
+turrets.push(create_turret({ x: 500, y: 180 }, 'purple', 70, 10))
+turrets.push(create_turret({ x: 610, y: 470 }, 'purple', 70, 10))
 
-create_enemies_over_time(create_enemy(10,5 , path, "red", 20), enemies, 5, 400)
+create_enemies_over_time(create_enemy(10,5 , path, "red", 2), enemies, 5, 400)
 
 
 let main_loop: NodeJS.Timer = setInterval(() => {
@@ -68,26 +69,29 @@ let main_loop: NodeJS.Timer = setInterval(() => {
 
         }
     })
-
-
     enemies.forEach(enemy => {
         if (enemy !== undefined) {
             move_to_target(enemy)
             draw_enemy(enemy, ctx)
             if (enemy.healthPoints < 0) {
+                player.money += enemy.damage
                 enemies.splice(enemies.indexOf(enemy), 1)
             }
 
             if (vector_distance(enemy.position, enemy.path[enemy.path.length - 1]) <= 10) {
-                enemies.splice(enemies.indexOf(enemy), 1)
                 player.healthPoints -= enemy.damage
+                enemies.splice(enemies.indexOf(enemy), 1)
+
             }
         }
 
 
     });
 
-
+    ctx.fillStyle = 'black'
+    ctx.font = '50px serif';
+    ctx.fillText(`health: ${player.healthPoints}        money: ${player.money}       wave: ${player.wave}`, 0,50)
+    
 }, timeScale)
 
 

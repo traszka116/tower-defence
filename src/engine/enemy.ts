@@ -67,13 +67,7 @@ function move_to_target(e: Enemy): void {
     move_in_direction(e, vector_scale(navigate(e), -1))
 
 }
-function deal_damage(e: Enemy, dmg: number): void {
 
-    e.healthPoints -= dmg;
-    
-
-
-}
 
 
 
