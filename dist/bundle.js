@@ -2,6 +2,10 @@
 const timeScale = 1000 / 30;
 const canvas = document.querySelector('#can');
 const ctx = canvas.getContext("2d");
+const player = {
+    wave: 1,
+    healthPoints: 100
+};
 let path = [
     { x: 100, y: 50 },
     { x: 300, y: 90 },
@@ -15,7 +19,7 @@ let enemies = [];
 turrets.push(create_turret({ x: 100, y: 110 }, 'purple', 70, 10));
 turrets.push(create_turret({ x: 500, y: 130 }, 'purple', 70, 10));
 turrets.push(create_turret({ x: 610, y: 420 }, 'purple', 70, 10));
-enemies.push(create_enemy(20, path, 'red', 3));
+create_enemies_over_time(create_enemy(10, 5, path, "red", 20), enemies, 5, 400);
 let main_loop = setInterval(() => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_path(path, ctx);
@@ -45,9 +49,23 @@ let main_loop = setInterval(() => {
             if (enemy.healthPoints < 0) {
                 enemies.splice(enemies.indexOf(enemy), 1);
             }
+            if (vector_distance(enemy.position, enemy.path[enemy.path.length - 1]) <= 10) {
+                enemies.splice(enemies.indexOf(enemy), 1);
+                player.healthPoints -= enemy.damage;
+            }
         }
     });
 }, timeScale);
+function create_enemies_over_time(enemyTemplate, enemyArray, count, timeout) {
+    let i = 0;
+    let timer = setInterval(() => {
+        if (i == count) {
+            clearInterval(timer);
+        }
+        enemyArray.push(create_enemy(enemyTemplate.healthPoints, enemyTemplate.damage, enemyTemplate.path, enemyTemplate.color, enemyTemplate.speed));
+        i++;
+    }, timeout);
+}
 function draw_enemy(e, c) {
     c.beginPath();
     c.arc(e.position.x, e.position.y, 12, 0, 2 * Math.PI);
@@ -55,7 +73,7 @@ function draw_enemy(e, c) {
     c.fill();
     c.closePath();
 }
-function create_enemy(health, p, color, speed) {
+function create_enemy(health, damage, p, color, speed) {
     let enemy = {
         healthPoints: health,
         color: color,
@@ -63,7 +81,8 @@ function create_enemy(health, p, color, speed) {
         speed: speed,
         path: p,
         target: p[1],
-        toDestroy: false
+        toDestroy: false,
+        damage: damage
     };
     return enemy;
 }

@@ -2,6 +2,16 @@ const timeScale = 1000 / 30;
 const canvas = document.querySelector('#can') as HTMLCanvasElement
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D
 
+
+const player = {
+    wave: 1,
+    healthPoints: 100
+}
+
+
+
+
+
 let path: Path =
     [
         { x: 100, y: 50 },
@@ -21,7 +31,8 @@ let enemies: (Enemy | undefined)[] = []
 turrets.push(create_turret({ x: 100, y: 110 }, 'purple', 70, 10))
 turrets.push(create_turret({ x: 500, y: 130 }, 'purple', 70, 10))
 turrets.push(create_turret({ x: 610, y: 420 }, 'purple', 70, 10))
-enemies.push(create_enemy(20, path, 'red', 3))
+
+create_enemies_over_time(create_enemy(10,5 , path, "red", 20), enemies, 5, 400)
 
 
 let main_loop: NodeJS.Timer = setInterval(() => {
@@ -66,7 +77,14 @@ let main_loop: NodeJS.Timer = setInterval(() => {
             if (enemy.healthPoints < 0) {
                 enemies.splice(enemies.indexOf(enemy), 1)
             }
+
+            if (vector_distance(enemy.position, enemy.path[enemy.path.length - 1]) <= 10) {
+                enemies.splice(enemies.indexOf(enemy), 1)
+                player.healthPoints -= enemy.damage
+            }
         }
+
+
     });
 
 

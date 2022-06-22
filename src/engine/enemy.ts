@@ -1,4 +1,5 @@
 interface Enemy {
+    damage: number;
     healthPoints: number;
     color: string;
     position: Vector2D;
@@ -8,6 +9,20 @@ interface Enemy {
     toDestroy: boolean;
 }
 
+function create_enemies_over_time(enemyTemplate:Enemy,enemyArray:(Enemy | undefined)[],count:number,timeout:number)
+{
+    let i = 0;
+    let timer = setInterval(()=>{
+        if(i==count)
+        {
+            clearInterval(timer);
+        }
+        enemyArray.push(create_enemy(enemyTemplate.healthPoints,enemyTemplate.damage,enemyTemplate.path,enemyTemplate.color,enemyTemplate.speed))
+        i++;
+    },timeout) 
+}
+
+
 function draw_enemy(e: Enemy, c: CanvasRenderingContext2D) {
     c.beginPath()
     c.arc(e.position.x, e.position.y, 12, 0, 2 * Math.PI)
@@ -15,7 +30,7 @@ function draw_enemy(e: Enemy, c: CanvasRenderingContext2D) {
     c.fill()
     c.closePath()
 }
-function create_enemy(health: number, p: Path, color: string, speed: number): Enemy {
+function create_enemy(health: number,damage:number, p: Path, color: string, speed: number): Enemy {
     let enemy: Enemy = {
         healthPoints: health,
         color: color,
@@ -23,7 +38,8 @@ function create_enemy(health: number, p: Path, color: string, speed: number): En
         speed: speed,
         path: p,
         target: p[1],
-        toDestroy: false
+        toDestroy: false,
+        damage:damage
     }
     return enemy
 }
