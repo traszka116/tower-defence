@@ -1,21 +1,22 @@
 interface Turret {
-    target_away: boolean;
     position: Vector2D;
     color: string;
     range: number;
-    target: Enemy | undefined;
     damage: number;
-
+    type: string;
+    max_cooldown:number;
+    remaining_cooldown:number;
 }
 
-function create_turret(position: Vector2D, color: string, range: number, damage: number): Turret {
+function create_turret(position: Vector2D, color: string, range: number, damage: number,cooldown:number,type:string): Turret {
     return {
         position: position,
         color: color,
         range: range,
         damage: damage,
-        target: undefined,
-        target_away: true
+        type:type,
+        max_cooldown:cooldown,
+        remaining_cooldown:cooldown
     }
 }
 
@@ -41,32 +42,7 @@ function find_enemies_in_range(t: Turret, e: (Enemy | undefined)[]): Enemy[] {
     }) as Enemy[]
 }
 
-function find_nearest_enemy(t: Turret, e: Enemy[]): Enemy {
-    return e.sort((a, b) => (vector_distance(a.position, t.position) - vector_distance(b.position, t.position)))[0]
-}
-
-function draw_laser(t: Turret, e: Enemy, c: CanvasRenderingContext2D) {
-
-
-    c.beginPath()
-    c.strokeStyle = 'rgb(0, 150, 8)'
-    c.lineWidth = 8
-    c.moveTo(t.position.x, t.position.y)
-    c.lineTo(e.position.x, e.position.y)
-    c.stroke()
-    c.closePath()
-
-    c.beginPath()
-    c.strokeStyle = 'rgb(0, 200, 8)'
-    c.lineWidth = 3
-    c.moveTo(t.position.x, t.position.y)
-    c.lineTo(e.position.x, e.position.y)
-    c.stroke()
-    c.closePath()
-
-}
-
 function deal_damage(e: Enemy, dmg: number): void {
 
-    e.healthPoints -= dmg;
+    e.healthPoints -= dmg ;
 }

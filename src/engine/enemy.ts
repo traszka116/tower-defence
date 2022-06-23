@@ -13,7 +13,7 @@ function create_enemies_over_time(enemyTemplate:Enemy,enemyArray:(Enemy | undefi
 {
     let i = 0;
     let timer = setInterval(()=>{
-        if(i==count)
+        if(i==count-1)
         {
             clearInterval(timer);
         }

@@ -1,5 +1,5 @@
 "use strict";
-const timeScale = 1000 / 30;
+const tickSpeed = 1000 / 30;
 const canvas = document.querySelector('#can');
 const ctx = canvas.getContext("2d");
 const player = {
@@ -15,56 +15,55 @@ let path = [
     { x: 800, y: 350 },
     { x: 900, y: 350 }
 ];
-let turrets = [];
+// let turrets: Turret[] = []
+// let enemies: (Enemy | undefined)[] = []
+// 
+// let enemy: Enemy = create_enemy(10,5,path,"orange",50)
+// let targeting_turret : TargetingTurret = create_targeting_turret({x:110,y:50},"blue",90,10)
+// draw_turret(targeting_turret,ctx)
+// lock_on_target(targeting_turret,[enemy])
+// TargetingTurret_attack(targeting_turret,ctx)
 let enemies = [];
-turrets.push(create_turret({ x: 100, y: 160 }, 'purple', 70, 10));
-turrets.push(create_turret({ x: 500, y: 180 }, 'purple', 70, 10));
-turrets.push(create_turret({ x: 610, y: 470 }, 'purple', 70, 10));
-create_enemies_over_time(create_enemy(10, 5, path, "red", 2), enemies, 5, 400);
-let main_loop = setInterval(() => {
+create_enemies_over_time(create_enemy(10, 5, path, "red", 2), enemies, 10, 400);
+let turrets = [];
+turrets.push(create_targeting_turret({ x: 620, y: 470 }, "blue", 90, 10));
+let loop = setInterval(() => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     draw_path(path, ctx);
-    turrets.forEach(turret => {
-        draw_turret(turret, ctx);
-        if (turret.target == undefined || turret.target_away) {
-            turret.target = find_nearest_enemy(turret, find_enemies_in_range(turret, enemies));
-            turret.target_away = false;
-        }
-        if (turret.target != undefined) {
-            if (vector_distance(turret.target.position, turret.position) > turret.range) {
-                turret.target_away = true;
-            }
-            if (turret.target && !turret.target_away) {
-                draw_laser(turret, turret.target, ctx);
-                deal_damage(turret.target, turret.damage / timeScale);
-                if (turret.target.healthPoints <= 0) {
-                    turret.target = undefined;
+    turrets.forEach(t => {
+        draw_turret(t, ctx);
+        if (t.type == "targeting") {
+            const tt = t;
+            if (tt.target != undefined && tt.target?.healthPoints <= 0)
+                tt.target = null;
+            if (tt.target == null || is_target_to_far(tt))
+                lock_on_target(tt, enemies);
+            if (tt.target != null)
+                draw_laser(tt, ctx);
+            if (t.remaining_cooldown <= 0) {
+                if (tt.target != null) {
+                    deal_damage(tt.target, tt.damage);
+                    t.remaining_cooldown = t.max_cooldown;
                 }
             }
+            if (t.remaining_cooldown > 0)
+                t.remaining_cooldown -= tickSpeed;
         }
     });
-    enemies.forEach(enemy => {
-        if (enemy !== undefined) {
-            move_to_target(enemy);
-            draw_enemy(enemy, ctx);
-            if (enemy.healthPoints < 0) {
-                player.money += enemy.damage;
-                enemies.splice(enemies.indexOf(enemy), 1);
-            }
-            if (vector_distance(enemy.position, enemy.path[enemy.path.length - 1]) <= 10) {
-                player.healthPoints -= enemy.damage;
-                enemies.splice(enemies.indexOf(enemy), 1);
-            }
-        }
+    enemies.forEach(e => {
+        move_to_target(e);
+        draw_enemy(e, ctx);
+        if (e.healthPoints <= 0)
+            enemies.splice(enemies.indexOf(e), 1);
     });
-    ctx.fillStyle = 'black';
-    ctx.font = '50px serif';
-    ctx.fillText(`health: ${player.healthPoints}        money: ${player.money}       wave: ${player.wave}`, 0, 50);
-}, timeScale);
+}, tickSpeed);
+// let main_loop: NodeJS.Timer = setInterval(() => {
+//     ctx.clearRect(0, 0, canvas.width, canvas.height)
+// }, timeScale)
 function create_enemies_over_time(enemyTemplate, enemyArray, count, timeout) {
     let i = 0;
     let timer = setInterval(() => {
-        if (i == count) {
+        if (i == count - 1) {
             clearInterval(timer);
         }
         enemyArray.push(create_enemy(enemyTemplate.healthPoints, enemyTemplate.damage, enemyTemplate.path, enemyTemplate.color, enemyTemplate.speed));
@@ -134,14 +133,69 @@ function draw_path(p, c) {
     c.fillStyle = "green";
     c.fillRect(e.x - 10, e.y - 10, 20, 20);
 }
-function create_turret(position, color, range, damage) {
+function draw_laser(t, c) {
+    if (t.target != undefined && t.target != null) {
+        let e = t.target;
+        c.beginPath();
+        c.strokeStyle = 'rgb(0, 150, 8)';
+        c.lineWidth = 8;
+        c.moveTo(t.position.x, t.position.y);
+        c.lineTo(e.position.x, e.position.y);
+        c.stroke();
+        c.closePath();
+        c.beginPath();
+        c.strokeStyle = 'rgb(0, 200, 8)';
+        c.lineWidth = 3;
+        c.moveTo(t.position.x, t.position.y);
+        c.lineTo(e.position.x, e.position.y);
+        c.stroke();
+        c.closePath();
+    }
+}
+function find_nearest_enemy(t, e) {
+    return e.sort((a, b) => (vector_distance(a.position, t.position) - vector_distance(b.position, t.position)))[0];
+}
+function is_target_to_far(t) {
+    if (t.target == null) {
+        return false;
+    }
+    return vector_distance(t.target.position, t.position) > t.range;
+}
+function lock_on_target(t, e) {
+    let nearest_in_range = find_nearest_enemy(t, find_enemies_in_range(t, e));
+    if (nearest_in_range != undefined) {
+        t.target = nearest_in_range;
+        return;
+    }
+    t.target = null;
+}
+function create_targeting_turret(position, color, range, damage) {
     return {
         position: position,
         color: color,
         range: range,
         damage: damage,
-        target: undefined,
-        target_away: true
+        target: null,
+        type: "targeting",
+        max_cooldown: 1000,
+        remaining_cooldown: 1000
+    };
+}
+function TargetingTurret_attack(t, c) {
+    if (t.target != null) {
+        draw_laser(t, c);
+        deal_damage(t.target, t.damage);
+    }
+}
+function create_turret(position, color, range, damage, cooldown, type) {
+    return {
+        position: position,
+        color: color,
+        range: range,
+        damage: damage,
+        type: type,
+        max_cooldown: cooldown,
+        remaining_cooldown: cooldown
     };
 }
 function draw_turret(t, c) {
@@ -162,25 +216,6 @@ function find_enemies_in_range(t, e) {
             return false;
         return (vector_distance(t.position, enemy.position) <= t.range);
     });
-}
-function find_nearest_enemy(t, e) {
-    return e.sort((a, b) => (vector_distance(a.position, t.position) - vector_distance(b.position, t.position)))[0];
-}
-function draw_laser(t, e, c) {
-    c.beginPath();
-    c.strokeStyle = 'rgb(0, 150, 8)';
-    c.lineWidth = 8;
-    c.moveTo(t.position.x, t.position.y);
-    c.lineTo(e.position.x, e.position.y);
-    c.stroke();
-    c.closePath();
-    c.beginPath();
-    c.strokeStyle = 'rgb(0, 200, 8)';
-    c.lineWidth = 3;
-    c.moveTo(t.position.x, t.position.y);
-    c.lineTo(e.position.x, e.position.y);
-    c.stroke();
-    c.closePath();
 }
 function deal_damage(e, dmg) {
     e.healthPoints -= dmg;

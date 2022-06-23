@@ -1,4 +1,4 @@
-const timeScale = 1000 / 30;
+const tickSpeed = 1000 / 30;
 const canvas = document.querySelector('#can') as HTMLCanvasElement
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D
 
@@ -25,74 +25,89 @@ let path: Path =
 
 
 
-let turrets: Turret[] = []
-let enemies: (Enemy | undefined)[] = []
+// let turrets: Turret[] = []
+// let enemies: (Enemy | undefined)[] = []
 
 
-turrets.push(create_turret({ x: 100, y: 160 }, 'purple', 70, 10))
-turrets.push(create_turret({ x: 500, y: 180 }, 'purple', 70, 10))
-turrets.push(create_turret({ x: 610, y: 470 }, 'purple', 70, 10))
-
-create_enemies_over_time(create_enemy(10,5 , path, "red", 2), enemies, 5, 400)
 
 
-let main_loop: NodeJS.Timer = setInterval(() => {
 
+// 
+// let enemy: Enemy = create_enemy(10,5,path,"orange",50)
+
+// let targeting_turret : TargetingTurret = create_targeting_turret({x:110,y:50},"blue",90,10)
+
+// draw_turret(targeting_turret,ctx)
+// lock_on_target(targeting_turret,[enemy])
+// TargetingTurret_attack(targeting_turret,ctx)
+
+
+let enemies:Enemy[] = []
+create_enemies_over_time(create_enemy(10,5 , path, "red", 2), enemies, 10, 400)
+
+let turrets:Turret[] = []
+turrets.push(create_targeting_turret({x:620,y:470},"blue",90,10))
+
+let loop: NodeJS.Timer = setInterval(()=>{
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-
     draw_path(path, ctx)
-
-    turrets.forEach(turret => {
-
-        draw_turret(turret, ctx)
-        if (turret.target == undefined || turret.target_away) {
-            turret.target = find_nearest_enemy(turret, find_enemies_in_range(turret, enemies))
-            turret.target_away = false
-        }
-        if (turret.target != undefined) {
-            if (vector_distance(turret.target.position, turret.position) > turret.range) {
-                turret.target_away = true
-
-            }
-            if (turret.target && !turret.target_away) {
-                draw_laser(turret, turret.target, ctx)
-                deal_damage(turret.target, turret.damage / timeScale)
-                if (turret.target.healthPoints <= 0) {
-                    turret.target = undefined
-                }
-
-            }
-
-
-
-
-
-        }
-    })
-    enemies.forEach(enemy => {
-        if (enemy !== undefined) {
-            move_to_target(enemy)
-            draw_enemy(enemy, ctx)
-            if (enemy.healthPoints < 0) {
-                player.money += enemy.damage
-                enemies.splice(enemies.indexOf(enemy), 1)
-            }
-
-            if (vector_distance(enemy.position, enemy.path[enemy.path.length - 1]) <= 10) {
-                player.healthPoints -= enemy.damage
-                enemies.splice(enemies.indexOf(enemy), 1)
-
-            }
-        }
-
-
-    });
-
-    ctx.fillStyle = 'black'
-    ctx.font = '50px serif';
-    ctx.fillText(`health: ${player.healthPoints}        money: ${player.money}       wave: ${player.wave}`, 0,50)
     
-}, timeScale)
+    
+    turrets.forEach(t=>{
+        draw_turret(t,ctx)
+        if(t.type == "targeting")
+        {
+            const tt:TargetingTurret = t as TargetingTurret 
+            if(tt.target != undefined && tt.target?.healthPoints<=0)
+                tt.target = null                
+            if(tt.target == null || is_target_to_far(tt))
+                lock_on_target(tt,enemies)            
+            if (tt.target != null)
+                draw_laser(tt, ctx)
+            if(t.remaining_cooldown <= 0){
+                if (tt.target != null){
+                    deal_damage(tt.target,tt.damage)
+                    t.remaining_cooldown = t.max_cooldown
+            }}
+            if(t.remaining_cooldown>0)
+                t.remaining_cooldown -= tickSpeed
+        }
+        
+
+    })
+    
+    enemies.forEach(e=>{
+        move_to_target(e)
+        draw_enemy(e,ctx)
+        if(e.healthPoints <= 0)
+        enemies.splice(enemies.indexOf(e),1)
+    })
+
+
+
+
+},tickSpeed)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// let main_loop: NodeJS.Timer = setInterval(() => {
+
+//     ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+
+    
+// }, timeScale)
 
 
 
