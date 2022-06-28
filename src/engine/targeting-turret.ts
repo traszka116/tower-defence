@@ -1,4 +1,3 @@
-
 interface TargetingTurret extends Turret {
     target: Enemy | null;
 }
@@ -45,18 +44,10 @@ function lock_on_target(t: TargetingTurret, e: Enemy[]) {
     t.target = null
 }
 
-function create_targeting_turret(position: Vector2D, color: string, range: number, damage: number): TargetingTurret {
-    return {
-        position: position,
-        color: color,
-        range: range,
-        damage: damage,
-        target: null,
-        type: "targeting",
-        max_cooldown:1000,
-        remaining_cooldown:1000
-
-    }
+function create_targeting_turret(position: Vector2D, color: string, range: number, damage: number,cooldown:number,cost:number): TargetingTurret {
+    let temp: TargetingTurret = create_turret(position, color, range, damage, cooldown, "targeting",cost) as TargetingTurret
+    temp.target = null
+    return temp
 }
 
 function TargetingTurret_attack(t: TargetingTurret, c: CanvasRenderingContext2D) {

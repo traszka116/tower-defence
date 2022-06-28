@@ -3,6 +3,13 @@ interface Vector2D {
     y:number
 }
 
+
+function evaluateA(v1:Vector2D,v2:Vector2D)
+{
+    return (v2.y - v1.y)/(v1.x - v1.x)
+}
+
+
 function vector_sum(v1:Vector2D,v2:Vector2D):Vector2D {
     return {
         x: v1.x + v2.x,
